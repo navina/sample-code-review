@@ -1,6 +1,5 @@
 package sample.databuffer;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -17,10 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-/**
- * The class <code>sample.databuffer.DataBuffer</code> is a byte buffer data that resides in off-heap memory.
- * The byte buffer may be memory mapped (MMAP) or direct allocated (DIRECT).
- */
 @ThreadSafe
 public abstract class DataBuffer implements Closeable {
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBuffer.class);
@@ -53,12 +48,8 @@ public abstract class DataBuffer implements Closeable {
     @Override
     public String toString() {
       String context = "Type: " + _type + ", Size: " + _size;
-      if (_filePath != null) {
-        context += ", File Path: " + _filePath;
-      }
-      if (_description != null) {
-        context += ", Description: " + _description;
-      }
+      context += ", File Path: " + _filePath;
+      context += ", Description: " + _description;
       return context;
     }
   }
@@ -70,15 +61,6 @@ public abstract class DataBuffer implements Closeable {
   private static final AtomicLong ALLOCATION_FAILURE_COUNT = new AtomicLong();
   private static final Map<DataBuffer, BufferContext> BUFFER_CONTEXT_MAP = new WeakHashMap<>();
 
-  /**
-   * Allocates a buffer using direct memory.
-   * <p>NOTE: The contents of the allocated buffer are not defined.
-   *
-   * @param size The size of the buffer
-   * @param byteOrder The byte order of the buffer (big-endian or little-endian)
-   * @param description The description of the buffer
-   * @return The buffer allocated
-   */
   public static DataBuffer allocateDirect(int size, ByteOrder byteOrder, @Nullable String description) {
     DataBuffer buffer;
     try {
@@ -99,9 +81,6 @@ public abstract class DataBuffer implements Closeable {
     return buffer;
   }
 
-  /**
-   * Allocates a buffer using direct memory and loads a file into the buffer.
-   */
   public static DataBuffer loadFile(File file, long offset, int size, ByteOrder byteOrder,
       @Nullable String description)
       throws IOException {
@@ -124,19 +103,6 @@ public abstract class DataBuffer implements Closeable {
     return buffer;
   }
 
-  /**
-   * Allocates a buffer using direct memory and loads a big-endian file into the buffer.
-   */
-  @VisibleForTesting
-  public static DataBuffer loadBigEndianFile(File file)
-      throws IOException {
-    return loadFile(file, 0, (int) file.length(), ByteOrder.BIG_ENDIAN, null);
-  }
-
-  /**
-   * Memory maps a file into a buffer.
-   * <p>NOTE: If the file gets extended, the contents of the extended portion of the file are not defined.
-   */
   public static DataBuffer mapFile(File file, boolean readOnly, long offset, int size, ByteOrder byteOrder,
       @Nullable String description)
       throws IOException {
@@ -159,34 +125,6 @@ public abstract class DataBuffer implements Closeable {
     return buffer;
   }
 
-  /**
-   * Memory maps a read-only big-endian file into a buffer.
-   */
-  @VisibleForTesting
-  public static DataBuffer mapReadOnlyBigEndianFile(File file)
-      throws IOException {
-    return mapFile(file, true, 0, (int) file.length(), ByteOrder.BIG_ENDIAN, null);
-  }
-
-  public static long getDirectBufferCount() {
-    return DIRECT_BUFFER_COUNT.get();
-  }
-
-  public static long getDirectBufferUsage() {
-    return DIRECT_BUFFER_USAGE.get();
-  }
-
-  public static long getMmapBufferCount() {
-    return MMAP_BUFFER_COUNT.get();
-  }
-
-  public static long getMmapBufferUsage() {
-    return MMAP_BUFFER_USAGE.get();
-  }
-
-  public static long getAllocationFailureCount() {
-    return ALLOCATION_FAILURE_COUNT.get();
-  }
 
   public static List<String> getBufferInfo() {
     synchronized (BUFFER_CONTEXT_MAP) {
@@ -248,14 +186,6 @@ public abstract class DataBuffer implements Closeable {
 
   public abstract void putChar(long offset, char value);
 
-  public abstract short getShort(int offset);
-
-  public abstract short getShort(long offset);
-
-  public abstract void putShort(int offset, short value);
-
-  public abstract void putShort(long offset, short value);
-
   public abstract int getInt(int offset);
 
   public abstract int getInt(long offset);
@@ -272,39 +202,23 @@ public abstract class DataBuffer implements Closeable {
 
   public abstract void putLong(long offset, long value);
 
-  public abstract float getFloat(int offset);
+  public abstract void doSomething(long offset, byte[] buffer, int destOffset, int size);
 
-  public abstract float getFloat(long offset);
-
-  public abstract void putFloat(int offset, float value);
-
-  public abstract void putFloat(long offset, float value);
-
-  public abstract double getDouble(int offset);
-
-  public abstract double getDouble(long offset);
-
-  public abstract void putDouble(int offset, double value);
-
-  public abstract void putDouble(long offset, double value);
-
-  public abstract void copyTo(long offset, byte[] buffer, int destOffset, int size);
-
-  public void copyTo(long offset, byte[] buffer) {
-    copyTo(offset, buffer, 0, buffer.length);
+  public void doSomething(long offset, byte[] buffer) {
+    doSomething(offset, buffer, 0, buffer.length);
   }
 
-  public abstract void copyTo(long offset, DataBuffer buffer, long destOffset, long size);
+  public abstract void doSomething(long offset, DataBuffer buffer, long destOffset, long size);
 
-  public abstract void readFrom(long offset, byte[] buffer, int srcOffset, int size);
+  public abstract void doSomethingElse(long offset, byte[] buffer, int srcOffset, int size);
 
-  public void readFrom(long offset, byte[] buffer) {
-    readFrom(offset, buffer, 0, buffer.length);
+  public void doSomethingElse(long offset, byte[] buffer) {
+    doSomethingElse(offset, buffer, 0, buffer.length);
   }
 
-  public abstract void readFrom(long offset, ByteBuffer buffer);
+  public abstract void doSomethingElse(long offset, ByteBuffer buffer);
 
-  public abstract void readFrom(long offset, File file, long srcOffset, long size)
+  public abstract void doSomethingElse(long offset, File file, long srcOffset, long size)
       throws IOException;
 
   public abstract long size();

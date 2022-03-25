@@ -101,14 +101,10 @@ public class DataBufferTest {
     Assert.assertEquals(buffer.size(), BUFFER_SIZE);
     testReadWriteByte(buffer);
     testReadWriteChar(buffer);
-    testReadWriteShort(buffer);
     testReadWriteInt(buffer);
     testReadWriteLong(buffer);
-    testReadWriteFloat(buffer);
-    testReadWriteDouble(buffer);
     testReadWriteBytes(buffer);
     testReadWriteDataBuffer(buffer);
-    testReadFromByteBuffer(buffer);
     testConcurrentReadWrite(buffer);
   }
 
@@ -140,20 +136,6 @@ public class DataBufferTest {
     }
   }
 
-  private void testReadWriteShort(DataBuffer buffer) {
-    for (int i = 0; i < NUM_ROUNDS; i++) {
-      int index = RANDOM.nextInt(SHORT_ARRAY_LENGTH);
-      int intOffset = index * Byte.BYTES;
-      buffer.putShort(intOffset, _shorts[i]);
-      Assert.assertEquals(buffer.getShort(intOffset), _shorts[i]);
-    }
-    for (int i = 0; i < NUM_ROUNDS; i++) {
-      int index = RANDOM.nextInt(SHORT_ARRAY_LENGTH);
-      long longOffset = index * Byte.BYTES;
-      buffer.putShort(longOffset, _shorts[i]);
-      Assert.assertEquals(buffer.getShort(longOffset), _shorts[i]);
-    }
-  }
 
   private void testReadWriteInt(DataBuffer buffer) {
     for (int i = 0; i < NUM_ROUNDS; i++) {
@@ -185,35 +167,6 @@ public class DataBufferTest {
     }
   }
 
-  private void testReadWriteFloat(DataBuffer buffer) {
-    for (int i = 0; i < NUM_ROUNDS; i++) {
-      int index = RANDOM.nextInt(FLOAT_ARRAY_LENGTH);
-      int intOffset = index * Byte.BYTES;
-      buffer.putFloat(intOffset, _floats[i]);
-      Assert.assertEquals(buffer.getFloat(intOffset), _floats[i]);
-    }
-    for (int i = 0; i < NUM_ROUNDS; i++) {
-      int index = RANDOM.nextInt(FLOAT_ARRAY_LENGTH);
-      long longOffset = index * Byte.BYTES;
-      buffer.putFloat(longOffset, _floats[i]);
-      Assert.assertEquals(buffer.getFloat(longOffset), _floats[i]);
-    }
-  }
-
-  private void testReadWriteDouble(DataBuffer buffer) {
-    for (int i = 0; i < NUM_ROUNDS; i++) {
-      int index = RANDOM.nextInt(DOUBLE_ARRAY_LENGTH);
-      int intOffset = index * Byte.BYTES;
-      buffer.putDouble(intOffset, _doubles[i]);
-      Assert.assertEquals(buffer.getDouble(intOffset), _doubles[i]);
-    }
-    for (int i = 0; i < NUM_ROUNDS; i++) {
-      int index = RANDOM.nextInt(DOUBLE_ARRAY_LENGTH);
-      long longOffset = index * Byte.BYTES;
-      buffer.putDouble(longOffset, _doubles[i]);
-      Assert.assertEquals(buffer.getDouble(longOffset), _doubles[i]);
-    }
-  }
 
   private void testReadWriteBytes(DataBuffer buffer) {
     byte[] readBuffer = new byte[MAX_BYTES_LENGTH];
@@ -223,8 +176,8 @@ public class DataBufferTest {
       int offset = RANDOM.nextInt(BUFFER_SIZE - length);
       int arrayOffset = RANDOM.nextInt(MAX_BYTES_LENGTH - length);
       System.arraycopy(_bytes, offset, readBuffer, arrayOffset, length);
-      buffer.readFrom(offset, readBuffer, arrayOffset, length);
-      buffer.copyTo(offset, writeBuffer, arrayOffset, length);
+      buffer.doSomethingElse(offset, readBuffer, arrayOffset, length);
+      buffer.doSomething(offset, writeBuffer, arrayOffset, length);
       int end = arrayOffset + length;
       for (int j = arrayOffset; j < end; j++) {
         Assert.assertEquals(writeBuffer[j], readBuffer[j]);
@@ -242,24 +195,11 @@ public class DataBufferTest {
     for (int i = 0; i < NUM_ROUNDS; i++) {
       int length = RANDOM.nextInt(MAX_BYTES_LENGTH);
       int offset = RANDOM.nextInt(BUFFER_SIZE - length);
-      readBuffer.readFrom(0, _bytes, RANDOM.nextInt(BUFFER_SIZE - length), length);
-      readBuffer.copyTo(0, buffer, offset, length);
-      buffer.copyTo(offset, writeBuffer, 0, length);
+      readBuffer.doSomethingElse(0, _bytes, RANDOM.nextInt(BUFFER_SIZE - length), length);
+      readBuffer.doSomething(0, buffer, offset, length);
+      buffer.doSomething(offset, writeBuffer, 0, length);
       for (int j = 0; j < length; j++) {
         Assert.assertEquals(writeBuffer.getByte(j), readBuffer.getByte(j));
-      }
-    }
-  }
-
-  private void testReadFromByteBuffer(DataBuffer buffer) {
-    byte[] readBuffer = new byte[MAX_BYTES_LENGTH];
-    for (int i = 0; i < NUM_ROUNDS; i++) {
-      int length = RANDOM.nextInt(MAX_BYTES_LENGTH);
-      int offset = RANDOM.nextInt(BUFFER_SIZE - length);
-      System.arraycopy(_bytes, offset, readBuffer, 0, length);
-      buffer.readFrom(offset, ByteBuffer.wrap(readBuffer, 0, length));
-      for (int j = 0; j < length; j++) {
-        Assert.assertEquals(buffer.getByte(offset + j), readBuffer[j]);
       }
     }
   }
@@ -274,11 +214,11 @@ public class DataBufferTest {
         byte[] readBuffer = new byte[length];
         byte[] writeBuffer = new byte[length];
         System.arraycopy(_bytes, offset, readBuffer, 0, length);
-        buffer.readFrom(offset, readBuffer);
-        buffer.copyTo(offset, writeBuffer);
+        buffer.doSomethingElse(offset, readBuffer);
+        buffer.doSomething(offset, writeBuffer);
         Assert.assertTrue(Arrays.equals(readBuffer, writeBuffer));
-        buffer.readFrom(offset, ByteBuffer.wrap(readBuffer));
-        buffer.copyTo(offset, writeBuffer);
+        buffer.doSomethingElse(offset, ByteBuffer.wrap(readBuffer));
+        buffer.doSomething(offset, writeBuffer);
         Assert.assertTrue(Arrays.equals(readBuffer, writeBuffer));
       });
     }
@@ -319,30 +259,6 @@ public class DataBufferTest {
     for (int i = 0; i < NUM_ROUNDS; i++) {
       int index = RANDOM.nextInt(INT_ARRAY_LENGTH);
       Assert.assertEquals(buffer.getInt(index * Integer.BYTES), _ints[index]);
-    }
-  }
-
-  @SuppressWarnings("RedundantExplicitClose")
-  @Test
-  public void testMultipleClose()
-      throws Exception {
-    try (DataBuffer buffer = BBuffer.allocateDirect(BUFFER_SIZE, DataBuffer.NATIVE_ORDER)) {
-      buffer.close();
-    }
-
-    try (RandomAccessFile randomAccessFile = new RandomAccessFile(TEMP_FILE, "rw")) {
-      randomAccessFile.setLength(FILE_OFFSET + BUFFER_SIZE);
-      try (DataBuffer buffer = BBuffer
-          .loadFile(TEMP_FILE, FILE_OFFSET, BUFFER_SIZE, DataBuffer.NATIVE_ORDER)) {
-        buffer.close();
-      }
-      try (DataBuffer buffer = BBuffer
-          .mapFile(TEMP_FILE, true, FILE_OFFSET, BUFFER_SIZE, DataBuffer.NATIVE_ORDER)) {
-        buffer.close();
-      }
-
-    } finally {
-      FileUtils.forceDelete(TEMP_FILE);
     }
   }
 

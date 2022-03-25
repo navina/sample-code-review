@@ -10,7 +10,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import javax.annotation.concurrent.ThreadSafe;
 
-
 @ThreadSafe
 public class BBuffer extends DataBuffer {
   private final ByteBuffer _buffer;
@@ -23,7 +22,7 @@ public class BBuffer extends DataBuffer {
   static BBuffer loadFile(File file, long offset, int size, ByteOrder byteOrder)
       throws IOException {
     BBuffer buffer = allocateDirect(size, byteOrder);
-    buffer.readFrom(0, file, offset, size);
+    buffer.doSomethingElse(0, file, offset, size);
     return buffer;
   }
 
@@ -93,28 +92,6 @@ public class BBuffer extends DataBuffer {
   }
 
   @Override
-  public short getShort(int offset) {
-    return _buffer.getShort(offset);
-  }
-
-  @Override
-  public short getShort(long offset) {
-    assert offset <= Integer.MAX_VALUE;
-    return _buffer.getShort((int) offset);
-  }
-
-  @Override
-  public void putShort(int offset, short value) {
-    _buffer.putShort(offset, value);
-  }
-
-  @Override
-  public void putShort(long offset, short value) {
-    assert offset <= Integer.MAX_VALUE;
-    _buffer.putShort((int) offset, value);
-  }
-
-  @Override
   public int getInt(int offset) {
     return _buffer.getInt(offset);
   }
@@ -158,52 +135,9 @@ public class BBuffer extends DataBuffer {
     _buffer.putLong((int) offset, value);
   }
 
-  @Override
-  public float getFloat(int offset) {
-    return _buffer.getFloat(offset);
-  }
 
   @Override
-  public float getFloat(long offset) {
-    assert offset <= Integer.MAX_VALUE;
-    return _buffer.getFloat((int) offset);
-  }
-
-  @Override
-  public void putFloat(int offset, float value) {
-    _buffer.putFloat(offset, value);
-  }
-
-  @Override
-  public void putFloat(long offset, float value) {
-    assert offset <= Integer.MAX_VALUE;
-    _buffer.putFloat((int) offset, value);
-  }
-
-  @Override
-  public double getDouble(int offset) {
-    return _buffer.getDouble(offset);
-  }
-
-  @Override
-  public double getDouble(long offset) {
-    assert offset <= Integer.MAX_VALUE;
-    return _buffer.getDouble((int) offset);
-  }
-
-  @Override
-  public void putDouble(int offset, double value) {
-    _buffer.putDouble(offset, value);
-  }
-
-  @Override
-  public void putDouble(long offset, double value) {
-    assert offset <= Integer.MAX_VALUE;
-    _buffer.putDouble((int) offset, value);
-  }
-
-  @Override
-  public void copyTo(long offset, byte[] buffer, int destOffset, int size) {
+  public void doSomething(long offset, byte[] buffer, int destOffset, int size) {
     assert offset <= Integer.MAX_VALUE;
     int intOffset = (int) offset;
     if (size <= DataBuffer.BULK_BYTES_PROCESSING_THRESHOLD) {
@@ -219,18 +153,18 @@ public class BBuffer extends DataBuffer {
   }
 
   @Override
-  public void copyTo(long offset, DataBuffer buffer, long destOffset, long size) {
+  public void doSomething(long offset, DataBuffer buffer, long destOffset, long size) {
     assert offset <= Integer.MAX_VALUE;
     assert size <= Integer.MAX_VALUE;
     int start = (int) offset;
     int end = start + (int) size;
     ByteBuffer duplicate = _buffer.duplicate();
     ((Buffer) duplicate).position(start).limit(end);
-    buffer.readFrom(destOffset, duplicate);
+    buffer.doSomethingElse(destOffset, duplicate);
   }
 
   @Override
-  public void readFrom(long offset, byte[] buffer, int srcOffset, int size) {
+  public void doSomethingElse(long offset, byte[] buffer, int srcOffset, int size) {
     assert offset <= Integer.MAX_VALUE;
     int intOffset = (int) offset;
     if (size <= DataBuffer.BULK_BYTES_PROCESSING_THRESHOLD) {
@@ -246,7 +180,7 @@ public class BBuffer extends DataBuffer {
   }
 
   @Override
-  public void readFrom(long offset, ByteBuffer buffer) {
+  public void doSomethingElse(long offset, ByteBuffer buffer) {
     assert offset <= Integer.MAX_VALUE;
     ByteBuffer duplicate = _buffer.duplicate();
     ((Buffer) duplicate).position((int) offset);
@@ -254,7 +188,7 @@ public class BBuffer extends DataBuffer {
   }
 
   @Override
-  public void readFrom(long offset, File file, long srcOffset, long size)
+  public void doSomethingElse(long offset, File file, long srcOffset, long size)
       throws IOException {
     assert offset <= Integer.MAX_VALUE;
     assert size <= Integer.MAX_VALUE;
