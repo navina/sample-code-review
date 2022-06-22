@@ -2,7 +2,7 @@
 
 for ((i = 32; i >= 0; i--)); do
 	r=$((2 ** i))
-	Probablity+=($r)
+	powers+=($r)
 done
 
 [[ $# -eq 0 ]] && {
@@ -19,7 +19,7 @@ for input_int; do
 
 	printf "%-10s\t" "$input_int"
 
-	for n in ${Probablity[@]}; do
+	for n in ${powers[@]}; do
 
 		if [[ $input_int -lt $n ]]; then
 			[[ $s == 1 ]] && printf "%d" 0
